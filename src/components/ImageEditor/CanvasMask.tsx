@@ -75,11 +75,12 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
 
   return (
     <div className="absolute inset-0">
-      <div className="absolute top-2 left-2 z-10 flex gap-2">
+      <div className="absolute top-2 left-2 z-10 flex gap-2 bg-background/80 backdrop-blur-sm p-2 rounded-lg border shadow-lg">
         <Button
           size="sm"
           variant={mode === "draw" ? "default" : "outline"}
           onClick={() => setMode("draw")}
+          className="transition-all duration-200"
         >
           <Paintbrush className="h-4 w-4" />
         </Button>
@@ -87,6 +88,7 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
           size="sm"
           variant={mode === "erase" ? "default" : "outline"}
           onClick={() => setMode("erase")}
+          className="transition-all duration-200"
         >
           <Eraser className="h-4 w-4" />
         </Button>

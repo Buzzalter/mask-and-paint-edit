@@ -6,9 +6,9 @@ interface OutputCardProps {
 
 export const OutputCard = ({ image }: OutputCardProps) => {
   return (
-    <Card>
+    <Card className="backdrop-blur-sm bg-card/50 border-2 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader>
-        <CardTitle>Output</CardTitle>
+        <CardTitle className="text-2xl">Output</CardTitle>
       </CardHeader>
       <CardContent>
         {image ? (

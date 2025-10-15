@@ -28,10 +28,10 @@ export const ImageUpload = ({ onUpload }: ImageUploadProps) => {
       <Button
         type="button"
         variant="outline"
-        className="w-full h-32 border-2 border-dashed"
+        className="w-full h-32 border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-all duration-300"
         onClick={() => fileInputRef.current?.click()}
       >
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
           <Upload className="h-8 w-8" />
           <span>Click to upload image</span>
         </div>

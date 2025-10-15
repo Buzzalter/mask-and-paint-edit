@@ -66,9 +66,9 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
   };
 
   return (
-    <Card>
+    <Card className="backdrop-blur-sm bg-card/50 border-2 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader>
-        <CardTitle>Input</CardTitle>
+        <CardTitle className="text-2xl">Input</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
