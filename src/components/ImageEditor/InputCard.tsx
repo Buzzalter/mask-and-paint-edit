@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "./ImageUpload";
 import { ImagePreview } from "./ImagePreview";
 import { CanvasMask } from "./CanvasMask";
+import LoadingSpinner from "./LoadingSpinner";
 import { toast } from "sonner";
 
 interface InputCardProps {
@@ -19,6 +20,7 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [prompt, setPrompt] = useState<string>("");
   const [maskData, setMaskData] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   const handleImageUpload = async (file: File) => {
     // Convert image to data URL for preview
@@ -49,6 +51,8 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
       return;
     }
 
+    setIsGenerating(true);
+
     // Simulate API call
     const payload = {
       uuid: imageUuid,
@@ -57,12 +61,13 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
     };
 
     console.log("Generating with payload:", payload);
-    toast.success("Generation started!");
 
     // Simulate generation - in reality this would be the API response
     setTimeout(() => {
       onGenerate(imageUrl); // Using the same image as placeholder
-    }, 1500);
+      setIsGenerating(false);
+      toast.success("Image edited successfully!");
+    }, 3000);
   };
 
   return (
@@ -89,7 +94,7 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
           <ImageUpload onUpload={handleImageUpload} />
         )}
 
-        {imageUrl && (
+        {imageUrl && !isGenerating && (
           <>
             <ImagePreview 
               imageUrl={imageUrl} 
@@ -124,6 +129,8 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
             </Button>
           </>
         )}
+
+        {isGenerating && <LoadingSpinner />}
       </CardContent>
     </Card>
   );
