@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputCard } from "@/components/ImageEditor/InputCard";
 import { OutputCard } from "@/components/ImageEditor/OutputCard";
 
 const ImageEditing = () => {
-  const [outputImage, setOutputImage] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+
+  const handleGenerate = (newTaskId: string) => {
+    setTaskId(newTaskId);
+    setIsGenerating(true);
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -17,8 +22,8 @@ const ImageEditing = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <InputCard onGenerate={setOutputImage} />
-          <OutputCard image={outputImage} />
+          <InputCard onGenerate={handleGenerate} isGenerating={isGenerating} />
+          <OutputCard taskId={taskId} />
         </div>
       </div>
     </div>

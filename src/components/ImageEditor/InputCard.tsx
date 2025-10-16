@@ -7,36 +7,45 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "./ImageUpload";
 import { ImagePreview } from "./ImagePreview";
 import { CanvasMask } from "./CanvasMask";
-import LoadingSpinner from "./LoadingSpinner";
 import { toast } from "sonner";
+import { uploadImage, generateImage } from "@/services/api";
 
 interface InputCardProps {
-  onGenerate: (image: string) => void;
+  onGenerate: (taskId: string) => void;
+  isGenerating: boolean;
 }
 
-export const InputCard = ({ onGenerate }: InputCardProps) => {
+export const InputCard = ({ onGenerate, isGenerating }: InputCardProps) => {
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [imageUuid, setImageUuid] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [prompt, setPrompt] = useState<string>("");
   const [maskData, setMaskData] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   const handleImageUpload = async (file: File) => {
-    // Convert image to data URL for preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setImageUrl(dataUrl);
-    };
-    reader.readAsDataURL(file);
+    setIsUploading(true);
+    try {
+      // Convert image to data URL for preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setImageUrl(dataUrl);
+      };
+      reader.readAsDataURL(file);
 
-    // Simulate API call to upload image and get UUID
-    const simulatedUuid = crypto.randomUUID();
-    setImageUuid(simulatedUuid);
-    
-    toast.success("Image uploaded successfully");
-    console.log("Image uploaded with UUID:", simulatedUuid);
+      // Upload to FastAPI backend
+      const response = await uploadImage(file);
+      setImageUuid(response.uuid);
+      
+      toast.success("Image uploaded successfully");
+      console.log("Image uploaded with UUID:", response.uuid);
+    } catch (error) {
+      toast.error("Failed to upload image");
+      console.error("Upload error:", error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleRemoveImage = () => {
@@ -51,23 +60,23 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
       return;
     }
 
-    setIsGenerating(true);
+    try {
+      const payload = {
+        uuid: imageUuid,
+        prompt: prompt,
+        ...(selectedModel === "Option3" && maskData ? { mask: maskData } : {})
+      };
 
-    // Simulate API call
-    const payload = {
-      uuid: imageUuid,
-      prompt: prompt,
-      ...(selectedModel === "Option3" && maskData ? { mask: maskData } : {})
-    };
-
-    console.log("Generating with payload:", payload);
-
-    // Simulate generation - in reality this would be the API response
-    setTimeout(() => {
-      onGenerate(imageUrl); // Using the same image as placeholder
-      setIsGenerating(false);
-      toast.success("Image edited successfully!");
-    }, 3000);
+      console.log("Generating with payload:", payload);
+      
+      const response = await generateImage(payload);
+      onGenerate(response.task_id);
+      
+      toast.success("Generation started!");
+    } catch (error) {
+      toast.error("Failed to start generation");
+      console.error("Generation error:", error);
+    }
   };
 
   return (
@@ -94,7 +103,7 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
           <ImageUpload onUpload={handleImageUpload} />
         )}
 
-        {imageUrl && !isGenerating && (
+        {imageUrl && (
           <>
             <ImagePreview 
               imageUrl={imageUrl} 
@@ -123,14 +132,12 @@ export const InputCard = ({ onGenerate }: InputCardProps) => {
             <Button 
               onClick={handleGenerate} 
               className="w-full"
-              disabled={!prompt}
+              disabled={!prompt || isGenerating || isUploading}
             >
-              Generate
+              {isGenerating ? "Generating..." : "Generate"}
             </Button>
           </>
         )}
-
-        {isGenerating && <LoadingSpinner />}
       </CardContent>
     </Card>
   );
