@@ -11,23 +11,27 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [mode, setMode] = useState<"draw" | "erase">("draw");
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    // Load the image to get its actual dimensions
+    const img = new Image();
+    img.onload = () => {
+      // Set canvas to match actual image resolution
+      canvas.width = img.width;
+      canvas.height = img.height;
+      setImageSize({ width: img.width, height: img.height });
 
-    // Set canvas size to match parent
-    const parent = canvas.parentElement;
-    if (parent) {
-      canvas.width = parent.clientWidth;
-      canvas.height = parent.clientHeight;
-    }
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    // Initialize with transparent background
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Initialize with transparent background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+    img.src = imageUrl;
   }, [imageUrl]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -53,10 +57,15 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Scale coordinates from display size to actual canvas resolution
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
-    ctx.lineWidth = 20;
+    // Scale line width based on canvas resolution
+    const avgScale = (canvas.width / 800 + canvas.height / 800) / 2;
+    ctx.lineWidth = 20 * Math.max(avgScale, 1);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
