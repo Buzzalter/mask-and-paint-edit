@@ -124,7 +124,7 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
       </div>
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full cursor-crosshair"
+        className="absolute inset-0 w-full h-full cursor-crosshair object-contain"
         onMouseDown={startDrawing}
         onMouseUp={stopDrawing}
         onMouseMove={draw}
