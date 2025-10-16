@@ -113,14 +113,14 @@ export const getStatus = async (uuid: string): Promise<StatusResponse> => {
 };
 
 /**
- * Get the generated image
+ * Get the generated image as a streaming response
  * @param uuid - The UUID of the generated image
- * @returns Promise with the image URL
+ * @returns Promise with the image URL (blob URL)
  */
 export const getGeneratedImage = async (
   uuid: string
 ): Promise<GetGeneratedImageResponse> => {
-  const response = await fetch(`${API_BASE_URL}/image/${uuid}`, {
+  const response = await fetch(`${API_BASE_URL}/edit-result/${uuid}`, {
     method: "GET",
   });
 
@@ -128,5 +128,9 @@ export const getGeneratedImage = async (
     throw new Error(`Failed to get image: ${response.statusText}`);
   }
 
-  return await response.json();
+  // Convert the streaming response to a blob and create a URL
+  const blob = await response.blob();
+  const image_url = URL.createObjectURL(blob);
+
+  return { image_url };
 };
