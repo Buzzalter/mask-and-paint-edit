@@ -8,7 +8,7 @@ import { ImageUpload } from "./ImageUpload";
 import { ImagePreview } from "./ImagePreview";
 import { CanvasMask } from "./CanvasMask";
 import { toast } from "sonner";
-import { uploadImage, generateImage } from "@/services/api";
+import { uploadImage, generateImage, uploadMask } from "@/services/api";
 
 interface InputCardProps {
   onGenerate: (taskId: string) => void;
@@ -54,17 +54,73 @@ export const InputCard = ({ onGenerate, isGenerating }: InputCardProps) => {
     setMaskData(null);
   };
 
+  const convertMaskToBinaryPNG = (maskDataUrl: string): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        
+        if (!ctx) {
+          reject(new Error("Failed to get canvas context"));
+          return;
+        }
+
+        // Draw the mask image
+        ctx.drawImage(img, 0, 0);
+        
+        // Get image data and convert to binary black/white
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        for (let i = 0; i < data.length; i += 4) {
+          // If any color channel has value > 128, make it white (255), else black (0)
+          const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          const binaryValue = brightness > 128 ? 255 : 0;
+          data[i] = binaryValue;     // R
+          data[i + 1] = binaryValue; // G
+          data[i + 2] = binaryValue; // B
+          data[i + 3] = 255;         // A (fully opaque)
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+        
+        // Convert canvas to blob and then to File
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], "mask.png", { type: "image/png" });
+            resolve(file);
+          } else {
+            reject(new Error("Failed to create blob from canvas"));
+          }
+        }, "image/png");
+      };
+      img.onerror = () => reject(new Error("Failed to load mask image"));
+      img.src = maskDataUrl;
+    });
+  };
+
   const handleGenerate = async () => {
-    if (!imageUuid || !prompt) {
-      toast.error("Please upload an image and enter a prompt");
+    if (!imageUuid || !prompt || !selectedModel) {
+      toast.error("Please upload an image, select a model, and enter a prompt");
       return;
     }
 
     try {
+      // Upload mask if it exists
+      if (maskData) {
+        toast.info("Uploading mask...");
+        const maskFile = await convertMaskToBinaryPNG(maskData);
+        await uploadMask(imageUuid, maskFile);
+        console.log("Mask uploaded successfully");
+      }
+
       const payload = {
         uuid: imageUuid,
         prompt: prompt,
-        ...(selectedModel === "Option3" && maskData ? { mask: maskData } : {})
+        model: selectedModel
       };
 
       console.log("Generating with payload:", payload);
@@ -134,12 +190,13 @@ export const InputCard = ({ onGenerate, isGenerating }: InputCardProps) => {
                   isGenerating, 
                   isUploading, 
                   imageUuid,
-                  disabled: !prompt || isGenerating || isUploading 
+                  selectedModel,
+                  disabled: !prompt || isGenerating || isUploading || !selectedModel
                 });
                 handleGenerate();
               }} 
               className="w-full"
-              disabled={!prompt || isGenerating || isUploading}
+              disabled={!prompt || isGenerating || isUploading || !selectedModel}
             >
               {isGenerating ? "Generating..." : "Generate"}
             </Button>

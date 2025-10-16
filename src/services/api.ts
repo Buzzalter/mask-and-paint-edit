@@ -10,7 +10,7 @@ export interface UploadImageResponse {
 export interface GenerateImageRequest {
   uuid: string;
   prompt: string;
-  mask?: string;
+  model: string;
 }
 
 export interface GenerateImageResponse {
@@ -41,6 +41,28 @@ export const uploadImage = async (file: File): Promise<UploadImageResponse> => {
 
   if (!response.ok) {
     throw new Error(`Upload failed: ${response.statusText}`);
+  }
+
+  return await response.json();
+};
+
+/**
+ * Upload a binary mask to the FastAPI backend
+ * @param uuid - The UUID of the uploaded image
+ * @param maskFile - The binary mask file to upload
+ * @returns Promise with success status
+ */
+export const uploadMask = async (uuid: string, maskFile: File): Promise<{ message: string }> => {
+  const formData = new FormData();
+  formData.append("file", maskFile);
+
+  const response = await fetch(`${API_BASE_URL}/upload-mask/${uuid}`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Mask upload failed: ${response.statusText}`);
   }
 
   return await response.json();
