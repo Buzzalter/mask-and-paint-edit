@@ -108,14 +108,12 @@ export const InputCard = ({ onGenerate, isGenerating }: InputCardProps) => {
             <ImagePreview 
               imageUrl={imageUrl} 
               onRemove={handleRemoveImage}
-              showCanvas={selectedModel === "Option3"}
+              showCanvas={true}
             >
-              {selectedModel === "Option3" && (
-                <CanvasMask 
-                  imageUrl={imageUrl} 
-                  onMaskChange={setMaskData}
-                />
-              )}
+              <CanvasMask 
+                imageUrl={imageUrl} 
+                onMaskChange={setMaskData}
+              />
             </ImagePreview>
 
             <div className="space-y-2">

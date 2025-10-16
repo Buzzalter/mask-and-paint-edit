@@ -62,7 +62,8 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
 
     if (mode === "draw") {
       ctx.globalCompositeOperation = "source-over";
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
     } else {
       ctx.globalCompositeOperation = "destination-out";
     }
