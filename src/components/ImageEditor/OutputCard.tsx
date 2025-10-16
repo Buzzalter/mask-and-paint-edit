@@ -6,9 +6,10 @@ import { toast } from "sonner";
 
 interface OutputCardProps {
   taskId: string | null;
+  onGenerationComplete?: () => void;
 }
 
-export const OutputCard = ({ taskId }: OutputCardProps) => {
+export const OutputCard = ({ taskId, onGenerationComplete }: OutputCardProps) => {
   const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -28,6 +29,7 @@ export const OutputCard = ({ taskId }: OutputCardProps) => {
         console.error("Generation error:", error);
       } finally {
         setIsLoading(false);
+        onGenerationComplete?.();
       }
     };
 

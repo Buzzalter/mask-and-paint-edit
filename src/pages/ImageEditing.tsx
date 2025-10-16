@@ -11,6 +11,10 @@ const ImageEditing = () => {
     setIsGenerating(true);
   };
 
+  const handleGenerationComplete = () => {
+    setIsGenerating(false);
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-6xl space-y-8">
@@ -23,7 +27,7 @@ const ImageEditing = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <InputCard onGenerate={handleGenerate} isGenerating={isGenerating} />
-          <OutputCard taskId={taskId} />
+          <OutputCard taskId={taskId} onGenerationComplete={handleGenerationComplete} />
         </div>
       </div>
     </div>
