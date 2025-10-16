@@ -130,7 +130,16 @@ export const InputCard = ({ onGenerate, isGenerating }: InputCardProps) => {
             </div>
 
             <Button 
-              onClick={handleGenerate} 
+              onClick={() => {
+                console.log("Generate button clicked", { 
+                  prompt, 
+                  isGenerating, 
+                  isUploading, 
+                  imageUuid,
+                  disabled: !prompt || isGenerating || isUploading 
+                });
+                handleGenerate();
+              }} 
               className="w-full"
               disabled={!prompt || isGenerating || isUploading}
             >
