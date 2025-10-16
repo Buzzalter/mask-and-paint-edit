@@ -19,10 +19,14 @@ export interface GenerateImageResponse {
   message?: string;
 }
 
+export interface StatusResponse {
+  uuid: string;
+  status: string; // "Loading model...", "Initialising Data...", "Denoising x/y", "Complete"
+  progress: number; // 0-100
+}
+
 export interface GetGeneratedImageResponse {
-  status: "pending" | "processing" | "completed" | "failed";
-  image_url?: string;
-  error?: string;
+  image_url: string;
 }
 
 /**
@@ -92,50 +96,37 @@ export const generateImage = async (
 };
 
 /**
- * Poll for the generated image result
- * @param taskId - The task ID from the generate endpoint
- * @returns Promise with the generation status and image URL when ready
+ * Get the current status of image generation
+ * @param uuid - The UUID of the image being generated
+ * @returns Promise with the current status and progress
  */
-export const getGeneratedImage = async (
-  taskId: string
-): Promise<GetGeneratedImageResponse> => {
-  const response = await fetch(`${API_BASE_URL}/result/${taskId}`, {
+export const getStatus = async (uuid: string): Promise<StatusResponse> => {
+  const response = await fetch(`${API_BASE_URL}/status/${uuid}`, {
     method: "GET",
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to get result: ${response.statusText}`);
+    throw new Error(`Failed to get status: ${response.statusText}`);
   }
 
   return await response.json();
 };
 
 /**
- * Poll for generated image with automatic retries
- * @param taskId - The task ID to poll for
- * @param maxAttempts - Maximum number of polling attempts (default: 60)
- * @param intervalMs - Milliseconds between polls (default: 2000)
- * @returns Promise with the final image URL
+ * Get the generated image
+ * @param uuid - The UUID of the generated image
+ * @returns Promise with the image URL
  */
-export const pollForGeneratedImage = async (
-  taskId: string,
-  maxAttempts: number = 60,
-  intervalMs: number = 2000
-): Promise<string> => {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const result = await getGeneratedImage(taskId);
+export const getGeneratedImage = async (
+  uuid: string
+): Promise<GetGeneratedImageResponse> => {
+  const response = await fetch(`${API_BASE_URL}/image/${uuid}`, {
+    method: "GET",
+  });
 
-    if (result.status === "completed" && result.image_url) {
-      return result.image_url;
-    }
-
-    if (result.status === "failed") {
-      throw new Error(result.error || "Image generation failed");
-    }
-
-    // Wait before next poll
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  if (!response.ok) {
+    throw new Error(`Failed to get image: ${response.statusText}`);
   }
 
-  throw new Error("Image generation timed out");
+  return await response.json();
 };

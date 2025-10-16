@@ -3,11 +3,11 @@ import { InputCard } from "@/components/ImageEditor/InputCard";
 import { OutputCard } from "@/components/ImageEditor/OutputCard";
 
 const ImageEditing = () => {
-  const [taskId, setTaskId] = useState<string | null>(null);
+  const [uuid, setUuid] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  const handleGenerate = (newTaskId: string) => {
-    setTaskId(newTaskId);
+  const handleGenerate = (imageUuid: string) => {
+    setUuid(imageUuid);
     setIsGenerating(true);
   };
 
@@ -27,7 +27,7 @@ const ImageEditing = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <InputCard onGenerate={handleGenerate} isGenerating={isGenerating} />
-          <OutputCard taskId={taskId} onGenerationComplete={handleGenerationComplete} />
+          <OutputCard uuid={uuid} onGenerationComplete={handleGenerationComplete} />
         </div>
       </div>
     </div>

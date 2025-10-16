@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { uploadImage, generateImage, uploadMask } from "@/services/api";
 
 interface InputCardProps {
-  onGenerate: (taskId: string) => void;
+  onGenerate: (uuid: string) => void;
   isGenerating: boolean;
 }
 
@@ -125,8 +125,8 @@ export const InputCard = ({ onGenerate, isGenerating }: InputCardProps) => {
 
       console.log("Generating with payload:", payload);
       
-      const response = await generateImage(payload);
-      onGenerate(response.task_id);
+      await generateImage(payload);
+      onGenerate(imageUuid);
       
       toast.success("Generation started!");
     } catch (error) {
