@@ -19,10 +19,10 @@ const ImageEditing = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-6xl space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+          <h1 className="text-5xl font-heading font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-fade-in">
             Image Editing
           </h1>
-          <p className="text-muted-foreground text-lg">Example instruction</p>
+          <p className="text-muted-foreground text-lg font-body">Transform your images with AI-powered editing</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
