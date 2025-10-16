@@ -60,11 +60,31 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
+    
+    // Calculate the actual display size with object-contain
+    const displayAspect = rect.width / rect.height;
+    const canvasAspect = canvas.width / canvas.height;
+    
+    let displayWidth = rect.width;
+    let displayHeight = rect.height;
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    if (canvasAspect > displayAspect) {
+      // Canvas is wider - letterboxing on top/bottom
+      displayHeight = rect.width / canvasAspect;
+      offsetY = (rect.height - displayHeight) / 2;
+    } else {
+      // Canvas is taller - pillarboxing on left/right
+      displayWidth = rect.height * canvasAspect;
+      offsetX = (rect.width - displayWidth) / 2;
+    }
+    
     // Scale coordinates from display size to actual canvas resolution
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    const scaleX = canvas.width / displayWidth;
+    const scaleY = canvas.height / displayHeight;
+    const x = (e.clientX - rect.left - offsetX) * scaleX;
+    const y = (e.clientY - rect.top - offsetY) * scaleY;
 
     // Scale line width based on canvas resolution and user-selected brush size
     const avgScale = (canvas.width / 800 + canvas.height / 800) / 2;
