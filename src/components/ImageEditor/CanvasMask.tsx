@@ -38,8 +38,43 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
   }, [imageUrl]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     setIsDrawing(true);
-    draw(e);
+    
+    // Start a new path to prevent connecting to previous strokes
+    ctx.beginPath();
+    
+    const rect = canvas.getBoundingClientRect();
+    
+    // Calculate the actual display size with object-contain
+    const displayAspect = rect.width / rect.height;
+    const canvasAspect = canvas.width / canvas.height;
+    
+    let displayWidth = rect.width;
+    let displayHeight = rect.height;
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    if (canvasAspect > displayAspect) {
+      displayHeight = rect.width / canvasAspect;
+      offsetY = (rect.height - displayHeight) / 2;
+    } else {
+      displayWidth = rect.height * canvasAspect;
+      offsetX = (rect.width - displayWidth) / 2;
+    }
+    
+    const scaleX = canvas.width / displayWidth;
+    const scaleY = canvas.height / displayHeight;
+    const x = (e.clientX - rect.left - offsetX) * scaleX;
+    const y = (e.clientY - rect.top - offsetY) * scaleY;
+    
+    // Move to the starting point without drawing
+    ctx.moveTo(x, y);
   };
 
   const stopDrawing = () => {
@@ -51,7 +86,7 @@ export const CanvasMask = ({ imageUrl, onMaskChange }: CanvasMaskProps) => {
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing && e.type !== "mousedown") return;
+    if (!isDrawing) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
