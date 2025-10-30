@@ -134,3 +134,96 @@ export const getGeneratedImage = async (
 
   return { image_url };
 };
+
+// Pose Editor API
+export interface UploadPoseImageResponse {
+  uuid: string;
+  initial_values: {
+    pitch: number;
+    yaw: number;
+    roll: number;
+    x_axis: number;
+    y_axis: number;
+    z_axis: number;
+    pout: number;
+    pursing: number;
+    grin: number;
+    lip_open_close: number;
+    smile: number;
+    wink: number;
+    eyebrow: number;
+    horizontal_gaze: number;
+    vertical_gaze: number;
+  };
+}
+
+export interface UpdatePoseRequest {
+  pitch: number;
+  yaw: number;
+  roll: number;
+  x_axis: number;
+  y_axis: number;
+  z_axis: number;
+  pout: number;
+  pursing: number;
+  grin: number;
+  lip_open_close: number;
+  smile: number;
+  wink: number;
+  eyebrow: number;
+  horizontal_gaze: number;
+  vertical_gaze: number;
+}
+
+export interface UpdatePoseResponse {
+  image_url: string;
+}
+
+/**
+ * Upload an image for pose editing
+ * @param file - The image file to upload
+ * @returns Promise with the UUID and initial pose values
+ */
+export const uploadPoseImage = async (file: File): Promise<UploadPoseImageResponse> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/upload-pose`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to upload pose image: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+/**
+ * Update pose values and get the result image
+ * @param uuid - The UUID of the uploaded image
+ * @param values - The pose and expression values
+ * @returns Promise with the result image URL
+ */
+export const updatePose = async (uuid: string, values: UpdatePoseRequest): Promise<UpdatePoseResponse> => {
+  const response = await fetch(`${API_BASE_URL}/update-pose/${uuid}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(values),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update pose: ${response.statusText}`);
+  }
+
+  // Convert the streaming response to a blob
+  const blob = await response.blob();
+  
+  // Create a URL for the blob
+  const image_url = URL.createObjectURL(blob);
+
+  return { image_url };
+};
