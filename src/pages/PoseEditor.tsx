@@ -151,83 +151,97 @@ const PoseEditor = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Input Section */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Upload Image</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!imageUrl ? (
-                <ImageUpload onUpload={handleImageUpload} />
-              ) : (
-                <ImagePreview imageUrl={imageUrl} onRemove={handleRemoveImage} />
-              )}
-            </CardContent>
-          </Card>
+        {/* Image Section - Top */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{!imageUrl ? "Upload Image" : "Images"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!imageUrl ? (
+              <ImageUpload onUpload={handleImageUpload} />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Original Image */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Original</h3>
+                  <ImagePreview imageUrl={imageUrl} onRemove={handleRemoveImage} />
+                </div>
+                
+                {/* Result Image */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Result</h3>
+                  {resultImageUrl ? (
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-border">
+                      <img 
+                        src={resultImageUrl} 
+                        alt="Result" 
+                        className="w-full h-full object-contain"
+                      />
+                      {isProcessing && (
+                        <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="w-full aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center">
+                      <p className="text-muted-foreground text-center px-4">
+                        Adjust sliders to see results
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Controls Section */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Pose Controls</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-primary">Head Pose</h3>
+        {/* Controls Section - Bottom Grid */}
+        {imageUrl && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Head Pose Controls */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Head Pose</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <SliderControl label="Pitch" value={poseValues.pitch} min={-15} max={15} step={0.1} valueKey="pitch" />
                 <SliderControl label="Yaw" value={poseValues.yaw} min={-15} max={15} step={0.1} valueKey="yaw" />
                 <SliderControl label="Roll" value={poseValues.roll} min={-15} max={15} step={0.1} valueKey="roll" />
                 <SliderControl label="X-Axis" value={poseValues.x_axis} min={-1.0} max={1.0} step={0.01} valueKey="x_axis" />
                 <SliderControl label="Y-Axis" value={poseValues.y_axis} min={-1.0} max={1.0} step={0.01} valueKey="y_axis" />
                 <SliderControl label="Z-Axis" value={poseValues.z_axis} min={-1.0} max={1.0} step={0.01} valueKey="z_axis" />
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-primary">Expression</h3>
+            {/* Facial Expression Controls - Part 1 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Mouth & Lips</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <SliderControl label="Pout" value={poseValues.pout} min={-0.09} max={0.09} step={0.001} valueKey="pout" />
                 <SliderControl label="Pursing" value={poseValues.pursing} min={-15} max={15} step={0.1} valueKey="pursing" />
                 <SliderControl label="Grin" value={poseValues.grin} min={0} max={20} step={0.1} valueKey="grin" />
                 <SliderControl label="Lip Open/Close" value={poseValues.lip_open_close} min={-90} max={120} step={1} valueKey="lip_open_close" />
                 <SliderControl label="Smile" value={poseValues.smile} min={-0.3} max={1.3} step={0.01} valueKey="smile" />
+              </CardContent>
+            </Card>
+
+            {/* Facial Expression Controls - Part 2 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Eyes & Eyebrows</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <SliderControl label="Wink" value={poseValues.wink} min={0} max={39} step={1} valueKey="wink" />
                 <SliderControl label="Eyebrow" value={poseValues.eyebrow} min={-30} max={30} step={1} valueKey="eyebrow" />
                 <SliderControl label="Horizontal Gaze" value={poseValues.horizontal_gaze} min={-30} max={30} step={1} valueKey="horizontal_gaze" />
                 <SliderControl label="Vertical Gaze" value={poseValues.vertical_gaze} min={-30} max={30} step={1} valueKey="vertical_gaze" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Result Section */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Result</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {resultImageUrl ? (
-                <div className="space-y-4">
-                  <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-border">
-                    <img 
-                      src={resultImageUrl} 
-                      alt="Result" 
-                      className="w-full h-full object-contain"
-                    />
-                    {isProcessing && (
-                      <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center">
-                  <p className="text-muted-foreground text-center px-4">
-                    {uuid ? "Adjust sliders to see results" : "Upload an image to begin"}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
