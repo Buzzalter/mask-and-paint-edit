@@ -138,23 +138,35 @@ export const getGeneratedImage = async (
 // Pose Editor API
 export interface UploadPoseImageResponse {
   uuid: string;
-  initial_values: {
-    pitch: number;
-    yaw: number;
-    roll: number;
-    x_axis: number;
-    y_axis: number;
-    z_axis: number;
-    pout: number;
-    pursing: number;
-    grin: number;
-    lip_open_close: number;
-    smile: number;
-    wink: number;
-    eyebrow: number;
-    horizontal_gaze: number;
-    vertical_gaze: number;
-  };
+}
+
+export interface StartPosePreprocessResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface PoseStatusResponse {
+  uuid: string;
+  status: string;
+  progress: number;
+}
+
+export interface PoseValuesResponse {
+  pitch: number;
+  yaw: number;
+  roll: number;
+  x_axis: number;
+  y_axis: number;
+  z_axis: number;
+  pout: number;
+  pursing: number;
+  grin: number;
+  lip_open_close: number;
+  smile: number;
+  wink: number;
+  eyebrow: number;
+  horizontal_gaze: number;
+  vertical_gaze: number;
 }
 
 export interface UpdatePoseRequest {
@@ -182,7 +194,7 @@ export interface UpdatePoseResponse {
 /**
  * Upload an image for pose editing
  * @param file - The image file to upload
- * @returns Promise with the UUID and initial pose values
+ * @returns Promise with the UUID
  */
 export const uploadPoseImage = async (file: File): Promise<UploadPoseImageResponse> => {
   const formData = new FormData();
@@ -198,6 +210,64 @@ export const uploadPoseImage = async (file: File): Promise<UploadPoseImageRespon
   }
 
   return response.json();
+};
+
+/**
+ * Start preprocessing job for pose editing
+ * @param uuid - The UUID of the uploaded image
+ * @returns Promise with task ID and status
+ */
+export const startPosePreprocess = async (uuid: string): Promise<StartPosePreprocessResponse> => {
+  const response = await fetch(`${API_BASE_URL}/pose-preprocess`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      uuid: uuid,
+      job_type: "preprocess"
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to start preprocessing: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+/**
+ * Get the current status of pose preprocessing
+ * @param uuid - The UUID of the image being processed
+ * @returns Promise with the current status and progress
+ */
+export const getPoseStatus = async (uuid: string): Promise<PoseStatusResponse> => {
+  const response = await fetch(`${API_BASE_URL}/pose-status/${uuid}`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get pose status: ${response.statusText}`);
+  }
+
+  return await response.json();
+};
+
+/**
+ * Get the slider values after preprocessing
+ * @param uuid - The UUID of the processed image
+ * @returns Promise with all pose and expression values
+ */
+export const getPoseValues = async (uuid: string): Promise<PoseValuesResponse> => {
+  const response = await fetch(`${API_BASE_URL}/pose-values/${uuid}`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get pose values: ${response.statusText}`);
+  }
+
+  return await response.json();
 };
 
 /**

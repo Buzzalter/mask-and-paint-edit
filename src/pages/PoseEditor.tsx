@@ -4,8 +4,9 @@ import { ImageUpload } from "@/components/ImageEditor/ImageUpload";
 import { ImagePreview } from "@/components/ImageEditor/ImagePreview";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { uploadPoseImage, updatePose } from "@/services/api";
+import { uploadPoseImage, updatePose, startPosePreprocess, getPoseStatus, getPoseValues } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import LoadingSpinner from "@/components/ImageEditor/LoadingSpinner";
 
 interface PoseValues {
   pitch: number;
@@ -49,29 +50,89 @@ const PoseEditor = () => {
   });
   const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPreprocessing, setIsPreprocessing] = useState(false);
+  const [preprocessStatus, setPreprocessStatus] = useState<string>("Processing...");
+  const [preprocessProgress, setPreprocessProgress] = useState<number>(0);
 
   const handleImageUpload = async (file: File) => {
     setImageFile(file);
     const url = URL.createObjectURL(file);
     setImageUrl(url);
+    setIsPreprocessing(true);
+    setPreprocessStatus("Uploading image...");
+    setPreprocessProgress(10);
 
     try {
-      const response = await uploadPoseImage(file);
-      setUuid(response.uuid);
+      // Step 1: Upload image and get UUID
+      const uploadResponse = await uploadPoseImage(file);
+      setUuid(uploadResponse.uuid);
       
-      // Set initial values from API response
-      if (response.initial_values) {
-        setPoseValues(response.initial_values);
-      }
-
-      toast({
-        title: "Image uploaded",
-        description: "Initial pose values loaded successfully",
-      });
+      setPreprocessStatus("Starting preprocessing...");
+      setPreprocessProgress(20);
+      
+      // Step 2: Start preprocessing job
+      await startPosePreprocess(uploadResponse.uuid);
+      
+      // Step 3: Poll for status
+      pollPreprocessStatus(uploadResponse.uuid);
+      
     } catch (error) {
+      console.error("Failed to upload image:", error);
+      setIsPreprocessing(false);
       toast({
         title: "Upload failed",
-        description: "Failed to upload image",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const pollPreprocessStatus = async (imageUuid: string) => {
+    try {
+      const statusResponse = await getPoseStatus(imageUuid);
+      
+      setPreprocessStatus(statusResponse.status);
+      setPreprocessProgress(statusResponse.progress);
+      
+      if (statusResponse.status === "Complete" || statusResponse.progress >= 100) {
+        // Step 4: Get slider values
+        const valuesResponse = await getPoseValues(imageUuid);
+        
+        setPoseValues({
+          pitch: valuesResponse.pitch,
+          yaw: valuesResponse.yaw,
+          roll: valuesResponse.roll,
+          x_axis: valuesResponse.x_axis,
+          y_axis: valuesResponse.y_axis,
+          z_axis: valuesResponse.z_axis,
+          pout: valuesResponse.pout,
+          pursing: valuesResponse.pursing,
+          grin: valuesResponse.grin,
+          lip_open_close: valuesResponse.lip_open_close,
+          smile: valuesResponse.smile,
+          wink: valuesResponse.wink,
+          eyebrow: valuesResponse.eyebrow,
+          horizontal_gaze: valuesResponse.horizontal_gaze,
+          vertical_gaze: valuesResponse.vertical_gaze,
+        });
+        
+        setResultImageUrl(imageUrl);
+        setIsPreprocessing(false);
+        
+        toast({
+          title: "Image ready",
+          description: "Adjust the sliders to edit the pose",
+        });
+      } else {
+        // Continue polling every second
+        setTimeout(() => pollPreprocessStatus(imageUuid), 1000);
+      }
+    } catch (error) {
+      console.error("Failed to check status:", error);
+      setIsPreprocessing(false);
+      toast({
+        title: "Processing failed",
+        description: "Failed to process image. Please try again.",
         variant: "destructive",
       });
     }
@@ -84,6 +145,9 @@ const PoseEditor = () => {
     setImageUrl(null);
     setUuid(null);
     setResultImageUrl(null);
+    setIsPreprocessing(false);
+    setPreprocessStatus("Processing...");
+    setPreprocessProgress(0);
   };
 
   const handleSliderChange = async (key: keyof PoseValues, value: number[]) => {
@@ -134,7 +198,7 @@ const PoseEditor = () => {
         max={max}
         step={step}
         onValueChange={(val) => handleSliderChange(valueKey, val)}
-        disabled={!uuid || isProcessing}
+        disabled={!uuid || isProcessing || isPreprocessing}
       />
     </div>
   );
@@ -159,6 +223,8 @@ const PoseEditor = () => {
           <CardContent>
             {!imageUrl ? (
               <ImageUpload onUpload={handleImageUpload} />
+            ) : isPreprocessing ? (
+              <LoadingSpinner status={preprocessStatus} progress={preprocessProgress} />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Original Image */}
