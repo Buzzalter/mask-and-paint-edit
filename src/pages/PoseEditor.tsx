@@ -24,6 +24,7 @@ interface PoseValues {
   eyebrow: number;
   horizontal_gaze: number;
   vertical_gaze: number;
+  eye_open_close: number;
 }
 
 const PoseEditor = () => {
@@ -47,6 +48,7 @@ const PoseEditor = () => {
     eyebrow: 0,
     horizontal_gaze: 0,
     vertical_gaze: 0,
+    eye_open_close: 0,
   });
   const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -95,26 +97,14 @@ const PoseEditor = () => {
       setPreprocessProgress(statusResponse.progress);
       
       if (statusResponse.status === "Complete" || statusResponse.progress >= 100) {
-        // Step 4: Get slider values
+        // Step 4: Get slider values - only update lip_open_close and eye_open_close
         const valuesResponse = await getPoseValues(imageUuid);
         
-        setPoseValues({
-          pitch: valuesResponse.pitch,
-          yaw: valuesResponse.yaw,
-          roll: valuesResponse.roll,
-          x_axis: valuesResponse.x_axis,
-          y_axis: valuesResponse.y_axis,
-          z_axis: valuesResponse.z_axis,
-          pout: valuesResponse.pout,
-          pursing: valuesResponse.pursing,
-          grin: valuesResponse.grin,
+        setPoseValues(prev => ({
+          ...prev,
           lip_open_close: valuesResponse.lip_open_close,
-          smile: valuesResponse.smile,
-          wink: valuesResponse.wink,
-          eyebrow: valuesResponse.eyebrow,
-          horizontal_gaze: valuesResponse.horizontal_gaze,
-          vertical_gaze: valuesResponse.vertical_gaze,
-        });
+          eye_open_close: valuesResponse.eye_open_close,
+        }));
         
         setResultImageUrl(imageUrl);
         setIsPreprocessing(false);
@@ -301,6 +291,7 @@ const PoseEditor = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <SliderControl label="Wink" value={poseValues.wink} min={0} max={39} step={1} valueKey="wink" />
+                <SliderControl label="Eye Open/Close" value={poseValues.eye_open_close} min={-30} max={30} step={1} valueKey="eye_open_close" />
                 <SliderControl label="Eyebrow" value={poseValues.eyebrow} min={-30} max={30} step={1} valueKey="eyebrow" />
                 <SliderControl label="Horizontal Gaze" value={poseValues.horizontal_gaze} min={-30} max={30} step={1} valueKey="horizontal_gaze" />
                 <SliderControl label="Vertical Gaze" value={poseValues.vertical_gaze} min={-30} max={30} step={1} valueKey="vertical_gaze" />

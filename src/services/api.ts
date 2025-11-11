@@ -167,6 +167,7 @@ export interface PoseValuesResponse {
   eyebrow: number;
   horizontal_gaze: number;
   vertical_gaze: number;
+  eye_open_close: number;
 }
 
 export interface UpdatePoseRequest {
@@ -185,6 +186,7 @@ export interface UpdatePoseRequest {
   eyebrow: number;
   horizontal_gaze: number;
   vertical_gaze: number;
+  eye_open_close: number;
 }
 
 export interface UpdatePoseResponse {
