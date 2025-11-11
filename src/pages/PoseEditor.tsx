@@ -4,7 +4,7 @@ import { ImageUpload } from "@/components/ImageEditor/ImageUpload";
 import { ImagePreview } from "@/components/ImageEditor/ImagePreview";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { uploadPoseImage, updatePose, startPosePreprocess, getPoseStatus, getPoseValues } from "@/services/api";
+import { uploadPoseImage, retargetPose, startPoseInitialize, getPoseStatus, getPoseValues, getRetargetedImage } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from "@/components/ImageEditor/LoadingSpinner";
 
@@ -69,14 +69,14 @@ const PoseEditor = () => {
       const uploadResponse = await uploadPoseImage(file);
       setUuid(uploadResponse.uuid);
       
-      setPreprocessStatus("Starting preprocessing...");
+      setPreprocessStatus("Initializing...");
       setPreprocessProgress(20);
       
-      // Step 2: Start preprocessing job
-      await startPosePreprocess(uploadResponse.uuid);
+      // Step 2: Start initialize job
+      await startPoseInitialize(uploadResponse.uuid);
       
       // Step 3: Poll for status
-      pollPreprocessStatus(uploadResponse.uuid);
+      pollInitializeStatus(uploadResponse.uuid);
       
     } catch (error) {
       console.error("Failed to upload image:", error);
@@ -89,7 +89,7 @@ const PoseEditor = () => {
     }
   };
 
-  const pollPreprocessStatus = async (imageUuid: string) => {
+  const pollInitializeStatus = async (imageUuid: string) => {
     try {
       const statusResponse = await getPoseStatus(imageUuid);
       
@@ -97,16 +97,18 @@ const PoseEditor = () => {
       setPreprocessProgress(statusResponse.progress);
       
       if (statusResponse.status === "Complete" || statusResponse.progress >= 100) {
-        // Step 4: Get slider values - only update lip_open_close and eye_open_close
+        // Step 4: Get slider values for eyes and lips
         const valuesResponse = await getPoseValues(imageUuid);
         
         setPoseValues(prev => ({
           ...prev,
-          lip_open_close: valuesResponse.lip_open_close,
-          eye_open_close: valuesResponse.eye_open_close,
+          lip_open_close: valuesResponse.lips,
+          eye_open_close: valuesResponse.eyes,
         }));
         
-        setResultImageUrl(imageUrl);
+        // Fetch the initial image
+        const imageResponse = await getRetargetedImage(imageUuid);
+        setResultImageUrl(imageResponse.image_url);
         setIsPreprocessing(false);
         
         toast({
@@ -115,7 +117,7 @@ const PoseEditor = () => {
         });
       } else {
         // Continue polling every second
-        setTimeout(() => pollPreprocessStatus(imageUuid), 1000);
+        setTimeout(() => pollInitializeStatus(imageUuid), 1000);
       }
     } catch (error) {
       console.error("Failed to check status:", error);
@@ -148,17 +150,43 @@ const PoseEditor = () => {
 
     setIsProcessing(true);
     try {
-      const response = await updatePose(uuid, newValues);
-      if (resultImageUrl) URL.revokeObjectURL(resultImageUrl);
-      setResultImageUrl(response.image_url);
+      // Trigger retarget job
+      await retargetPose(uuid, newValues);
+      
+      // Poll for completion
+      pollRetargetStatus(uuid);
     } catch (error) {
       toast({
         title: "Update failed",
         description: "Failed to update pose",
         variant: "destructive",
       });
-    } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const pollRetargetStatus = async (imageUuid: string) => {
+    try {
+      const statusResponse = await getPoseStatus(imageUuid);
+      
+      if (statusResponse.status === "Complete" || statusResponse.progress >= 100) {
+        // Fetch the updated image
+        const imageResponse = await getRetargetedImage(imageUuid);
+        if (resultImageUrl) URL.revokeObjectURL(resultImageUrl);
+        setResultImageUrl(imageResponse.image_url);
+        setIsProcessing(false);
+      } else {
+        // Continue polling every 500ms for faster feedback
+        setTimeout(() => pollRetargetStatus(imageUuid), 500);
+      }
+    } catch (error) {
+      console.error("Failed to check retarget status:", error);
+      setIsProcessing(false);
+      toast({
+        title: "Update failed",
+        description: "Failed to update pose",
+        variant: "destructive",
+      });
     }
   };
 

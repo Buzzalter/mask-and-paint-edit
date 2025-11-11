@@ -140,7 +140,7 @@ export interface UploadPoseImageResponse {
   uuid: string;
 }
 
-export interface StartPosePreprocessResponse {
+export interface StartPoseInitializeResponse {
   task_id: string;
   status: string;
 }
@@ -152,22 +152,9 @@ export interface PoseStatusResponse {
 }
 
 export interface PoseValuesResponse {
-  pitch: number;
-  yaw: number;
-  roll: number;
-  x_axis: number;
-  y_axis: number;
-  z_axis: number;
-  pout: number;
-  pursing: number;
-  grin: number;
-  lip_open_close: number;
-  smile: number;
-  wink: number;
-  eyebrow: number;
-  horizontal_gaze: number;
-  vertical_gaze: number;
-  eye_open_close: number;
+  uuid: string;
+  eyes: number;
+  lips: number;
 }
 
 export interface UpdatePoseRequest {
@@ -215,37 +202,41 @@ export const uploadPoseImage = async (file: File): Promise<UploadPoseImageRespon
 };
 
 /**
- * Start preprocessing job for pose editing
+ * Start initialize job for pose editing
  * @param uuid - The UUID of the uploaded image
  * @returns Promise with task ID and status
  */
-export const startPosePreprocess = async (uuid: string): Promise<StartPosePreprocessResponse> => {
-  const response = await fetch(`${API_BASE_URL}/pose-preprocess`, {
+export const startPoseInitialize = async (uuid: string): Promise<StartPoseInitializeResponse> => {
+  const response = await fetch(`${API_BASE_URL}/pose-job`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       uuid: uuid,
-      job_type: "preprocess"
+      job: "initialize"
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to start preprocessing: ${response.statusText}`);
+    throw new Error(`Failed to start initialization: ${response.statusText}`);
   }
 
   return response.json();
 };
 
 /**
- * Get the current status of pose preprocessing
+ * Get the current status of pose job
  * @param uuid - The UUID of the image being processed
  * @returns Promise with the current status and progress
  */
 export const getPoseStatus = async (uuid: string): Promise<PoseStatusResponse> => {
-  const response = await fetch(`${API_BASE_URL}/pose-status/${uuid}`, {
-    method: "GET",
+  const response = await fetch(`${API_BASE_URL}/get_status`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ uuid }),
   });
 
   if (!response.ok) {
@@ -256,12 +247,12 @@ export const getPoseStatus = async (uuid: string): Promise<PoseStatusResponse> =
 };
 
 /**
- * Get the slider values after preprocessing
+ * Get the slider values after initialization
  * @param uuid - The UUID of the processed image
- * @returns Promise with all pose and expression values
+ * @returns Promise with eyes and lips values
  */
 export const getPoseValues = async (uuid: string): Promise<PoseValuesResponse> => {
-  const response = await fetch(`${API_BASE_URL}/pose-values/${uuid}`, {
+  const response = await fetch(`${API_BASE_URL}/get_values/${uuid}`, {
     method: "GET",
   });
 
@@ -273,22 +264,43 @@ export const getPoseValues = async (uuid: string): Promise<PoseValuesResponse> =
 };
 
 /**
- * Update pose values and get the result image
+ * Trigger retarget job with pose values
  * @param uuid - The UUID of the uploaded image
  * @param values - The pose and expression values
- * @returns Promise with the result image URL
+ * @returns Promise with task ID and status
  */
-export const updatePose = async (uuid: string, values: UpdatePoseRequest): Promise<UpdatePoseResponse> => {
-  const response = await fetch(`${API_BASE_URL}/update-pose/${uuid}`, {
+export const retargetPose = async (uuid: string, values: UpdatePoseRequest): Promise<{ task_id: string; status: string }> => {
+  const response = await fetch(`${API_BASE_URL}/pose-job`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(values),
+    body: JSON.stringify({
+      uuid: uuid,
+      job: "retarget",
+      ...values
+    }),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to update pose: ${response.statusText}`);
+    throw new Error(`Failed to retarget pose: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+/**
+ * Get the result image after retargeting
+ * @param uuid - The UUID of the image
+ * @returns Promise with the result image URL
+ */
+export const getRetargetedImage = async (uuid: string): Promise<UpdatePoseResponse> => {
+  const response = await fetch(`${API_BASE_URL}/get_image/${uuid}`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get retargeted image: ${response.statusText}`);
   }
 
   // Convert the streaming response to a blob
