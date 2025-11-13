@@ -150,11 +150,14 @@ const PoseEditor = () => {
     setPreprocessProgress(0);
   };
 
-  const handleSliderChange = async (key: keyof PoseValues, value: number[]) => {
-    const newValues = { ...poseValues, [key]: value[0] };
-    setPoseValues(newValues);
+  const handleSliderChange = (key: keyof PoseValues, value: number[]) => {
+    setPoseValues(prev => ({ ...prev, [key]: value[0] }));
+  };
 
+  const handleSliderCommit = async (key: keyof PoseValues, value: number[]) => {
     if (!uuid) return;
+
+    const newValues = { ...poseValues, [key]: value[0] };
 
     setIsProcessing(true);
     try {
@@ -224,6 +227,7 @@ const PoseEditor = () => {
         max={max}
         step={step}
         onValueChange={(val) => handleSliderChange(valueKey, val)}
+        onValueCommit={(val) => handleSliderCommit(valueKey, val)}
         disabled={!uuid || isProcessing || isPreprocessing}
       />
     </div>
