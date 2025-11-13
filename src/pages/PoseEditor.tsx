@@ -57,6 +57,7 @@ const PoseEditor = () => {
   const [preprocessProgress, setPreprocessProgress] = useState<number>(0);
 
   const handleImageUpload = async (file: File) => {
+    console.log("1. Starting image upload...");
     setImageFile(file);
     const url = URL.createObjectURL(file);
     setImageUrl(url);
@@ -66,14 +67,18 @@ const PoseEditor = () => {
 
     try {
       // Step 1: Upload image and get UUID
+      console.log("2. Uploading to backend...");
       const uploadResponse = await uploadPoseImage(file);
+      console.log("3. Got UUID:", uploadResponse.uuid);
       setUuid(uploadResponse.uuid);
       
       setPreprocessStatus("Initializing...");
       setPreprocessProgress(20);
       
       // Step 2: Start initialize job
+      console.log("4. Starting pose initialization...");
       await startPoseInitialize(uploadResponse.uuid);
+      console.log("5. Initialization started, now polling...");
       
       // Step 3: Poll for status
       pollInitializeStatus(uploadResponse.uuid);
@@ -90,8 +95,11 @@ const PoseEditor = () => {
   };
 
   const pollInitializeStatus = async (imageUuid: string) => {
+    console.log("6. pollInitializeStatus called with UUID:", imageUuid);
     try {
+      console.log("7. About to call getPoseStatus...");
       const statusResponse = await getPoseStatus(imageUuid);
+      console.log("8. Got status response:", statusResponse);
       
       setPreprocessStatus(statusResponse.status);
       setPreprocessProgress(statusResponse.progress);
