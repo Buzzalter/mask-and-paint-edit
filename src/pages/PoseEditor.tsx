@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ImageEditor/ImageUpload";
 import { ImagePreview } from "@/components/ImageEditor/ImagePreview";
@@ -55,6 +55,13 @@ const PoseEditor = () => {
   const [isPreprocessing, setIsPreprocessing] = useState(false);
   const [preprocessStatus, setPreprocessStatus] = useState<string>("Processing...");
   const [preprocessProgress, setPreprocessProgress] = useState<number>(0);
+  
+  // Use ref to always have latest pose values for API calls
+  const poseValuesRef = useRef(poseValues);
+  
+  useEffect(() => {
+    poseValuesRef.current = poseValues;
+  }, [poseValues]);
 
   const handleImageUpload = async (file: File) => {
     console.log("1. Starting image upload...");
@@ -157,7 +164,8 @@ const PoseEditor = () => {
   const handleSliderCommit = async (key: keyof PoseValues, value: number[]) => {
     if (!uuid) return;
 
-    const newValues = { ...poseValues, [key]: value[0] };
+    // Use ref to get the most up-to-date values
+    const newValues = { ...poseValuesRef.current, [key]: value[0] };
 
     setIsProcessing(true);
     try {
