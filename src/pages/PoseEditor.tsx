@@ -162,8 +162,7 @@ const PoseEditor = () => {
 
   const handleSliderChange = (key: keyof PoseValues, value: number[]) => {
     console.log("handleSliderChange called:", key, value);
-    // Just update the display value, don't trigger API
-    setPoseValues(prev => ({ ...prev, [key]: value[0] }));
+    // Don't update state during drag to avoid re-renders
   };
 
   const handleSliderCommit = async (key: keyof PoseValues, value: number[]) => {
@@ -241,13 +240,14 @@ const PoseEditor = () => {
         <span className="text-sm text-muted-foreground">{value.toFixed(2)}</span>
       </div>
       <Slider
-        key={`${valueKey}-${sliderKey}`}
         defaultValue={[value]}
         min={min}
         max={max}
         step={step}
-        onValueChange={(val) => handleSliderChange(valueKey, val)}
-        onValueCommit={(val) => handleSliderCommit(valueKey, val)}
+        onValueCommit={(val) => {
+          console.log("Slider onValueCommit prop fired:", valueKey, val);
+          handleSliderCommit(valueKey, val);
+        }}
         disabled={!uuid || isPreprocessing}
       />
     </div>
