@@ -231,15 +231,24 @@ export const startPoseInitialize = async (uuid: string): Promise<StartPoseInitia
  * @returns Promise with the current status and progress
  */
 export const getPoseStatus = async (uuid: string): Promise<PoseStatusResponse> => {
-  const response = await fetch(`${API_BASE_URL}/status/${uuid}`, {
+  const url = `${API_BASE_URL}/status/${uuid}`;
+  console.log("getPoseStatus called - URL:", url);
+  console.log("getPoseStatus called - UUID:", uuid);
+  
+  console.log("About to fetch...");
+  const response = await fetch(url, {
     method: "GET",
   });
+  console.log("Fetch completed, response:", response);
 
   if (!response.ok) {
+    console.error("Response not OK:", response.status, response.statusText);
     throw new Error(`Failed to get pose status: ${response.statusText}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  console.log("Parsed JSON data:", data);
+  return data;
 };
 
 /**
