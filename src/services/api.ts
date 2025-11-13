@@ -231,12 +231,8 @@ export const startPoseInitialize = async (uuid: string): Promise<StartPoseInitia
  * @returns Promise with the current status and progress
  */
 export const getPoseStatus = async (uuid: string): Promise<PoseStatusResponse> => {
-  const response = await fetch(`${API_BASE_URL}/get_status`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ uuid }),
+  const response = await fetch(`${API_BASE_URL}/get_status?uuid=${uuid}`, {
+    method: "GET",
   });
 
   if (!response.ok) {
