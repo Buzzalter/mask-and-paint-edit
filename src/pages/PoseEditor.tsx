@@ -56,6 +56,9 @@ const PoseEditor = () => {
   const [preprocessStatus, setPreprocessStatus] = useState<string>("Processing...");
   const [preprocessProgress, setPreprocessProgress] = useState<number>(0);
   
+  // Track slider keys to force re-render when needed
+  const [sliderKey, setSliderKey] = useState(0);
+  
   // Use ref to always have latest pose values for API calls
   const poseValuesRef = useRef(poseValues);
   
@@ -159,24 +162,27 @@ const PoseEditor = () => {
 
   const handleSliderChange = (key: keyof PoseValues, value: number[]) => {
     console.log("handleSliderChange called:", key, value);
+    // Just update the display value, don't trigger API
     setPoseValues(prev => ({ ...prev, [key]: value[0] }));
   };
 
   const handleSliderCommit = async (key: keyof PoseValues, value: number[]) => {
     console.log("handleSliderCommit called:", key, value, "UUID:", uuid);
+    
+    // Update the state with committed value
+    const newValue = value[0];
+    setPoseValues(prev => ({ ...prev, [key]: newValue }));
+    
     if (!uuid) return;
 
-    // Use ref to get the most up-to-date values
-    const newValues = { ...poseValuesRef.current, [key]: value[0] };
+    const newValues = { ...poseValuesRef.current, [key]: newValue };
     console.log("About to call retargetPose with:", newValues);
 
     setIsProcessing(true);
     try {
-      // Trigger retarget job
       await retargetPose(uuid, newValues);
       console.log("retargetPose completed successfully");
       
-      // Poll for completion
       pollRetargetStatus(uuid);
     } catch (error) {
       console.error("Error in handleSliderCommit:", error);
@@ -235,13 +241,14 @@ const PoseEditor = () => {
         <span className="text-sm text-muted-foreground">{value.toFixed(2)}</span>
       </div>
       <Slider
-        value={[value]}
+        key={`${valueKey}-${sliderKey}`}
+        defaultValue={[value]}
         min={min}
         max={max}
         step={step}
         onValueChange={(val) => handleSliderChange(valueKey, val)}
         onValueCommit={(val) => handleSliderCommit(valueKey, val)}
-        disabled={!uuid || isProcessing || isPreprocessing}
+        disabled={!uuid || isPreprocessing}
       />
     </div>
   );
