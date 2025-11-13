@@ -96,7 +96,7 @@ const PoseEditor = () => {
       setPreprocessStatus(statusResponse.status);
       setPreprocessProgress(statusResponse.progress);
       
-      if (statusResponse.status === "Complete" || statusResponse.progress >= 100) {
+      if (statusResponse.status === "Complete") {
         // Step 4: Get slider values for eyes and lips
         const valuesResponse = await getPoseValues(imageUuid);
         
@@ -169,7 +169,7 @@ const PoseEditor = () => {
     try {
       const statusResponse = await getPoseStatus(imageUuid);
       
-      if (statusResponse.status === "Complete" || statusResponse.progress >= 100) {
+      if (statusResponse.status === "Complete") {
         // Fetch the updated image
         const imageResponse = await getRetargetedImage(imageUuid);
         if (resultImageUrl) URL.revokeObjectURL(resultImageUrl);
