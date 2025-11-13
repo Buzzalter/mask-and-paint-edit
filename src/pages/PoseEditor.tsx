@@ -287,7 +287,7 @@ const PoseEditor = () => {
                 <div className="space-y-2">
                   <h3 className="text-sm font-semibold text-muted-foreground">Result</h3>
                   {resultImageUrl ? (
-                    <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-border">
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-border group">
                       <img 
                         src={resultImageUrl} 
                         alt="Result" 
@@ -297,6 +297,24 @@ const PoseEditor = () => {
                         <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
                         </div>
+                      )}
+                      {!isProcessing && (
+                        <button
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = resultImageUrl;
+                            link.download = `pose-edit-${Date.now()}.png`;
+                            link.click();
+                          }}
+                          className="absolute top-2 right-2 bg-background/90 hover:bg-background p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Download image"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                          </svg>
+                        </button>
                       )}
                     </div>
                   ) : (
