@@ -158,23 +158,28 @@ const PoseEditor = () => {
   };
 
   const handleSliderChange = (key: keyof PoseValues, value: number[]) => {
+    console.log("handleSliderChange called:", key, value);
     setPoseValues(prev => ({ ...prev, [key]: value[0] }));
   };
 
   const handleSliderCommit = async (key: keyof PoseValues, value: number[]) => {
+    console.log("handleSliderCommit called:", key, value, "UUID:", uuid);
     if (!uuid) return;
 
     // Use ref to get the most up-to-date values
     const newValues = { ...poseValuesRef.current, [key]: value[0] };
+    console.log("About to call retargetPose with:", newValues);
 
     setIsProcessing(true);
     try {
       // Trigger retarget job
       await retargetPose(uuid, newValues);
+      console.log("retargetPose completed successfully");
       
       // Poll for completion
       pollRetargetStatus(uuid);
     } catch (error) {
+      console.error("Error in handleSliderCommit:", error);
       toast({
         title: "Update failed",
         description: "Failed to update pose",
